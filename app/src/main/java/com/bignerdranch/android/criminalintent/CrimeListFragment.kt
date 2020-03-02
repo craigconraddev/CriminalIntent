@@ -4,13 +4,17 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.webkit.RenderProcessGoneDetail
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.android.synthetic.main.fragment_crime_list.*
 import java.util.*
 
 private const val TAG = "CrimeListFragment"
@@ -27,6 +31,10 @@ class CrimeListFragment : Fragment() {
     private var callbacks: Callbacks? = null
 
     private lateinit var crimeRecyclerView: RecyclerView
+    private lateinit var emptyView: LinearLayout
+    private lateinit var emptyTextView: TextView
+    private lateinit var addButton: ImageButton
+
     private var adapter: CrimeAdapter? = CrimeAdapter(emptyList())
 
     private val crimeListViewModel: CrimeListViewModel by lazy {
@@ -54,6 +62,16 @@ class CrimeListFragment : Fragment() {
             view.findViewById(R.id.crime_recycler_view) as RecyclerView
         crimeRecyclerView.layoutManager = LinearLayoutManager(context)
         crimeRecyclerView.adapter = adapter
+
+        emptyView = view.findViewById(R.id.empty_list_view)
+        emptyTextView = view.findViewById(R.id.empty_list_textview) as TextView
+        addButton = view.findViewById(R.id.add_crime_button) as ImageButton
+        addButton.setOnClickListener {
+            val crime = Crime()
+            crimeListViewModel.addCrime(crime)
+            callbacks?.onCrimeSelected(crime.id)
+        }
+
         return view
     }
 
@@ -94,6 +112,14 @@ class CrimeListFragment : Fragment() {
     private fun updateUI(crimes: List<Crime>) {
         adapter = CrimeAdapter(crimes)
         crimeRecyclerView.adapter = adapter
+        if (crimes.isEmpty()) {
+            crime_recycler_view.visibility = View.GONE
+            emptyView.visibility = View.VISIBLE
+        } else {
+            crimeRecyclerView.visibility = View.VISIBLE
+            emptyView.visibility = View.GONE
+        }
+
     }
 
     private inner class CrimeHolder(view: View) : RecyclerView.ViewHolder(view), View.OnClickListener {
