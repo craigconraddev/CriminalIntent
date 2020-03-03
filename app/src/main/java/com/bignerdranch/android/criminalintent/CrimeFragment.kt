@@ -170,7 +170,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
             requestCode == REQUEST_CONTACT && data != null -> {
                 val contactUri: Uri? = data.data
                 // Specify which fields you want your query to return values for
-                val queryFields = arrayOf(ContactsContract.Contacts.DISPLAY_NAME)
+                val queryFields = arrayOf(ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME )
                 // Perform your query - the contactUri is like a "where" clause here
                 val cursor = requireActivity().contentResolver
                     .query(contactUri, queryFields, null, null, null)
@@ -183,7 +183,9 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
                     // Pull out the first column of the first row of data -
                     // that is your suspect's name
                     it.moveToFirst()
-                    val suspect = it.getString(0)
+                    val suspect = it.getString(1)
+                    val id = it.getString(0)
+                    val cursor2 = requireActivity().contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone._ID + " = " + id,null, null)
                     crime.suspect = suspect
                     crimeDetailViewModel.saveCrime(crime)
                     suspectButton.text = suspect
