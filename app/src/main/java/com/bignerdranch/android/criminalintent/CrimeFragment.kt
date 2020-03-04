@@ -30,6 +30,7 @@ private const val DATE_FORMAT = "EEE, MMM, dd"
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
 
+    private lateinit var suspectPhoneNumber: String
     private lateinit var crime: Crime
     private lateinit var titleField: EditText
     private lateinit var dateButton: Button
@@ -61,6 +62,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         reportButton = view.findViewById(R.id.crime_report) as Button
         suspectButton = view.findViewById(R.id.crime_suspect) as Button
         callSuspectButton = view.findViewById(R.id.crime_call_suspect) as Button
+        suspectPhoneNumber = ""
+
 
         return view
     }
@@ -152,8 +155,10 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         }
 
         callSuspectButton.apply {
+            val phoneDialIntent =
+                Intent(Intent.ACTION_DIAL, Uri.parse("tel:$suspectPhoneNumber"))
             setOnClickListener {
-
+                startActivity(phoneDialIntent)
             }
         }
     }
@@ -170,7 +175,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
             requestCode == REQUEST_CONTACT && data != null -> {
                 val contactUri: Uri? = data.data
                 // Specify which fields you want your query to return values for
-                val queryFields = arrayOf(ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME )
+                val queryFields = arrayOf(ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME, ContactsContract.CommonDataKinds.Phone.NUMBER)
                 // Perform your query - the contactUri is like a "where" clause here
                 val cursor = requireActivity().contentResolver
                     .query(contactUri, queryFields, null, null, null)
@@ -183,13 +188,13 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
                     // Pull out the first column of the first row of data -
                     // that is your suspect's name
                     it.moveToFirst()
-                    val suspect = it.getString(1)
                     val id = it.getString(0)
-                    val cursor2 = requireActivity().contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone._ID + " = " + id,null, null)
+                    val suspect = it.getString(1)
+                    suspectPhoneNumber = it.getString(2)
+                    //val cursor2 = requireActivity().contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone._ID + " = " + id,null, null)
                     crime.suspect = suspect
                     crimeDetailViewModel.saveCrime(crime)
                     suspectButton.text = suspect
-
                 }
             }
         }
