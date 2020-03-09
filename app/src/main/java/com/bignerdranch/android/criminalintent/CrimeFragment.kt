@@ -1,5 +1,6 @@
 package com.bignerdranch.android.criminalintent
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,12 +11,15 @@ import android.provider.ContactsContract
 import android.text.Editable
 import android.text.TextWatcher
 import android.text.format.DateFormat
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.Observer
@@ -27,10 +31,12 @@ private const val DIALOG_DATE = "DialogDate"
 private const val REQUEST_DATE = 0
 private const val REQUEST_CONTACT = 1
 private const val DATE_FORMAT = "EEE, MMM, dd"
+private const val MY_PERMISSIONS_REQUEST_READ_CONTACTS = 2
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
 
     private lateinit var suspectPhoneNumber: String
+    private var isPermissionGranted: Boolean = false
     private lateinit var crime: Crime
     private lateinit var titleField: EditText
     private lateinit var dateButton: Button
@@ -47,6 +53,17 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         crime = Crime()
         val crimeId: UUID = arguments?.getSerializable(ARG_CRIME_ID) as UUID
         crimeDetailViewModel.loadCrime(crimeId)
+
+        if (ContextCompat.checkSelfPermission(requireActivity(),
+                Manifest.permission.READ_CONTACTS)
+            != PackageManager.PERMISSION_GRANTED) {
+
+          ActivityCompat.requestPermissions(requireActivity(), arrayOf(Manifest.permission.READ_CONTACTS),
+              MY_PERMISSIONS_REQUEST_READ_CONTACTS)
+
+        } else {
+            isPermissionGranted = true
+        }
     }
 
     override fun onCreateView(
@@ -190,22 +207,49 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
                     it.moveToFirst()
                     val id = it.getString(0)
                     val suspect = it.getString(1)
-                    val queryPhoneFields = arrayOf(id)
-                    val cursorPhone = requireActivity().contentResolver
-                        .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " =?", queryPhoneFields, null)
-                    cursorPhone?.use {
-                        suspectPhoneNumber = it.getString(0)
+                    if (isPermissionGranted) {
+                        val queryPhoneFields = arrayOf(id)
+                        val cursorPhone = requireActivity().contentResolver
+                            .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " =?", queryPhoneFields, null)
+                        cursorPhone?.use { itPhone ->
+                            suspectPhoneNumber = itPhone.getString(0)
+                            crime.suspectPhoneNumber = suspectPhoneNumber
+                        }
+                    } else {
+                        // disable callSuspectButton
                     }
 
-
-                    //val cursor2 = requireActivity().contentResolver.query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone._ID + " = " + id,null, null)
                     crime.suspect = suspect
-                    crime.suspectPhoneNumber = suspectPhoneNumber
                     crimeDetailViewModel.saveCrime(crime)
                     suspectButton.text = suspect
                 }
             }
         }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            MY_PERMISSIONS_REQUEST_READ_CONTACTS -> {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                    isPermissionGranted = true
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return
+            }
+
+            // Add other 'when' lines to check for other
+            // permissions this app might request.
+            else -> {
+                // Ignore all other requests.
+            }
+        }
+        Log.i(TAG, "Permission Granted: $isPermissionGranted")
     }
 
     private fun updateUI() {
