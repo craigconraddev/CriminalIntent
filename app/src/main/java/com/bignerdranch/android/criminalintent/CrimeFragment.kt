@@ -25,9 +25,11 @@ import java.util.*
 private const val TAG = "CrimeFragment"
 private const val ARG_CRIME_ID = "crime_id"
 private const val DIALOG_DATE = "DialogDate"
+private const val DIALOG_PHOTO = "DialogPhoto"
 private const val REQUEST_DATE = 0
 private const val REQUEST_CONTACT = 1
 private const val REQUEST_PHOTO = 2
+private const val PHOTO = 3
 private const val DATE_FORMAT = "EEE, MMM, dd"
 
 class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
@@ -161,6 +163,12 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
             }
         }
 
+        photoView.apply {
+            setOnClickListener {
+                showPhotoDialog(it)
+            }
+        }
+
         photoButton.apply {
             val packageManager: PackageManager = requireActivity().packageManager
             val captureImage = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -255,6 +263,13 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
             photoView.setImageBitmap(bitmap)
         } else {
             photoView.setImageDrawable(null)
+        }
+    }
+
+    private fun showPhotoDialog(v: View) {
+        PhotoFragment.newInstance(photoFile.absolutePath).apply {
+            setTargetFragment(this@CrimeFragment, PHOTO)
+            show(this@CrimeFragment.parentFragmentManager, DIALOG_PHOTO)
         }
     }
 
