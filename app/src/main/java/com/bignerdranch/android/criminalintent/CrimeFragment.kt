@@ -14,6 +14,7 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.*
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -42,6 +43,8 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
     private lateinit var suspectButton: Button
     private lateinit var photoButton: ImageButton
     private lateinit var photoView: ImageView
+    private var height = 0
+    private var width = 0
     private val crimeDetailViewModel: CrimeDetailViewModel by lazy {
         ViewModelProvider(this).get(CrimeDetailViewModel::class.java)
     }
@@ -68,6 +71,15 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         photoButton = view.findViewById(R.id.crime_camera) as ImageButton
         photoView = view.findViewById(R.id.crime_photo) as ImageView
 
+        photoView.viewTreeObserver.addOnGlobalLayoutListener {
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    photoView.viewTreeObserver.removeOnGlobalLayoutListener(this);
+                    updatePhotoView()
+                }
+            }
+        }
+
         return view
     }
 
@@ -82,7 +94,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
                     photoUri = FileProvider.getUriForFile(requireActivity(),
                         "com.bignerdranch.android.criminalintent.fileprovider",
                         photoFile)
-                    updateUI()
+                    updatePhotoView()
                 }
             })
     }
@@ -246,12 +258,16 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         if(crime.suspect.isNotEmpty()) {
             suspectButton.text = crime.suspect
         }
-        updatePhotoView()
+
+        if (height != 0 && width != 0) {
+            updatePhotoView()
+        }
     }
 
     private fun updatePhotoView() {
         if (photoFile.exists()) {
-            val bitmap = getScaledBitmap(photoFile.path, requireActivity())
+            val bitmap = getScaledBitmap(photoFile.path, photoView.measuredWidth, photoView.measuredHeight)
+
             photoView.setImageBitmap(bitmap)
         } else {
             photoView.setImageDrawable(null)
