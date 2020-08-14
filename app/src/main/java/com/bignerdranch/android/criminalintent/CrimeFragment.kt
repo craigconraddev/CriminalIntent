@@ -238,7 +238,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
 
     private fun updateUI() {
         titleField.setText(crime.title)
-        dateButton.text = crime.date.toString()
+        dateButton.text = DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "EEE MMM d h:mm:ss zzz yyyy "), crime.date).toString()
         solvedCheckBox.apply {
             isChecked = crime.isSolved
             jumpDrawablesToCurrentState()
@@ -265,7 +265,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
             getString(R.string.crime_report_unsolved)
         }
 
-        val dateString = DateFormat.format(DATE_FORMAT, crime.date).toString()
+        val dateString = DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), DATE_FORMAT), crime.date).toString()
         var suspect = if (crime.suspect.isBlank()) {
             getString(R.string.crime_report_no_suspect)
         } else {
