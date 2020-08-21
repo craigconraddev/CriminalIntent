@@ -14,6 +14,7 @@ import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.*
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -46,6 +47,9 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         ViewModelProvider(this).get(CrimeDetailViewModel::class.java)
     }
 
+    private var viewWidth = 0
+    private var viewHeight = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         crime = Crime()
@@ -68,6 +72,15 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
         photoButton = view.findViewById(R.id.crime_camera) as ImageButton
         photoView = view.findViewById(R.id.crime_photo) as ImageView
 
+        photoView.viewTreeObserver.addOnGlobalLayoutListener {
+            viewWidth = photoView.width
+            viewHeight = photoView.height
+            object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    photoView.viewTreeObserver.removeOnGlobalLayoutListener(this);
+                }
+            }
+        }
         return view
     }
 
@@ -251,7 +264,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
 
     private fun updatePhotoView() {
         if (photoFile.exists()) {
-            val bitmap = getScaledBitmap(photoFile.path, requireActivity())
+            val bitmap = getScaledBitmap(photoFile.path, viewWidth, viewHeight)
             photoView.setImageBitmap(bitmap)
         } else {
             photoView.setImageDrawable(null)
