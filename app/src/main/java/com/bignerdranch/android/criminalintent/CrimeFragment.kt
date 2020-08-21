@@ -232,6 +232,7 @@ class CrimeFragment : Fragment(), DatePickerFragment.Callbacks {
                 requireActivity().revokeUriPermission(photoUri,
                     Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 updatePhotoView()
+                photoView.postDelayed(Runnable { photoView.announceForAccessibility(getString(R.string.crime_photo_no_image_description)) }, 10)
             }
         }
     }
