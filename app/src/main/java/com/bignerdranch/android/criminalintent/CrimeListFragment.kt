@@ -11,6 +11,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.text.format.DateFormat
 import java.util.*
 
 private const val TAG = "CrimeListFragment"
@@ -117,6 +118,7 @@ class CrimeListFragment : Fragment() {
             } else {
                 View.GONE
             }
+
         }
 
         override fun onClick(v: View) {
@@ -136,6 +138,9 @@ class CrimeListFragment : Fragment() {
         override fun onBindViewHolder(holder: CrimeHolder, position: Int) {
             val crime = crimes[position]
             holder.bind(crime)
+            holder.itemView.contentDescription = crime.title + " " +
+                    DateFormat.format(DateFormat.getBestDateTimePattern(Locale.getDefault(), "MMM d yyyy h:mm"), crime.date).toString() + " " +
+                    getString(if ( crime.isSolved ) R.string.crime_solved_content_description else R.string.crime_unsolved_content_description)
         }
 
         override fun getItemCount() = crimes.size
